@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/ActionList">
+
+    <fragment
+        android:id="@+id/ActionList"
+        android:name="com.example.homecontrol.ActionList"
+        android:label="@string/action_list_fragment_label"
+        tools:layout="@layout/fragment_action_list">
+
+        <action
+            android:id="@+id/action_ActionList_to_BarcodeScan"
+            app:destination="@id/BarcodeScan" />
+    </fragment>
+    <fragment
+        android:id="@+id/BarcodeScan"
+        android:name="com.example.homecontrol.BarcodeScan"
+        android:label="@string/barcode_scan_fragment_label"
+        tools:layout="@layout/fragment_barcode_scan">
+
+        <action
+            android:id="@+id/action_BarcodeScan_to_ActionList"
+            app:destination="@id/ActionList" />
+    </fragment>
+</navigation>
