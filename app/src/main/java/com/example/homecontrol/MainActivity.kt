@@ -1,5 +1,7 @@
 package com.example.homecontrol
 
+// Barcode analysis
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
@@ -8,46 +10,40 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.speech.tts.TextToSpeech
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
-import android.util.Log
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.VideoRecordEvent
-import androidx.core.content.PermissionChecker
 import com.example.homecontrol.databinding.ActivityMainBinding
 import com.google.mlkit.common.MlKitException
-import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.Locale
-
-// Barcode analysis
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import okhttp3.*
-import java.io.IOException
-
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import okhttp3.*
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
 
 typealias LumaListener = (luma: Double) -> Unit
 
@@ -85,6 +81,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var cameraExecutor: ExecutorService
 
+    var textToSpeech: TextToSpeech? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -98,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Set up the listeners for take photo and video capture buttons
-        viewBinding.imageCaptureButton.setOnClickListener { processBarcode() }
+        viewBinding.imageCaptureButton.setOnClickListener { storeBarcode() }
 
         viewBinding.barcodeText.setTextColor(Color.BLACK);
         viewBinding.barcodeText.setBackgroundColor(Color.WHITE)
@@ -110,11 +108,19 @@ class MainActivity : AppCompatActivity() {
         viewBinding.imageCaptureButton.isClickable = false
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+        textToSpeech = TextToSpeech(
+            applicationContext
+        ) { i ->
+            // if No error is found then only it will run
+            if (i != TextToSpeech.ERROR) {
+                textToSpeech?.setLanguage(Locale.UK)
+            }
+        }
     }
 
-    private fun processBarcode() {
-        Log.i(TAG, "process barcode")
-        var isbn = viewBinding.barcodeText.text
+    private fun lookupBarcode(isbn: String?) {
+        Log.i(TAG, "lookup barcode")
         var url = "http://192.168.0.30:9090/lookup?isbn=$isbn"
         val request = Request.Builder()
             .url(url)
@@ -128,9 +134,66 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onResponse(call: Call, response: Response) {
                 val jsonBody = response.body()?.let { Json.parseToJsonElement(it.string()) }
+                val bookJson = jsonBody?.jsonObject?.get("book")?.let { Json.parseToJsonElement(it.toString()) }
                 Log.i(TAG, "Response body: $jsonBody")
                 if (jsonBody != null) {
-                    viewBinding.bookTitle.text = jsonBody.jsonObject["title"].toString()
+                    if (bookJson != null) {
+                        viewBinding.bookTitle.text = bookJson.jsonObject["title"].toString()
+                    }
+
+                    runOnUiThread {
+                        var alreadyStored = jsonBody.jsonObject["already_stored"]?.jsonPrimitive?.boolean
+                        Log.i(TAG, "stored: $alreadyStored")
+                        if (alreadyStored == true) {
+                            viewBinding.bookTitle.setBackgroundColor(Color.CYAN)
+                            viewBinding.imageCaptureButton.isClickable = false
+                            viewBinding.imageCaptureButton.isEnabled = false
+                        } else {
+                            viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
+                            viewBinding.imageCaptureButton.isEnabled = true
+                            viewBinding.imageCaptureButton.isClickable = true
+                        }                    }
+
+
+                }
+            }
+        })
+    }
+
+    val JSON = MediaType.parse("application/json; charset=utf-8")
+    private fun storeBarcode() {
+        Log.i(TAG, "store barcode")
+        var isbn = viewBinding.barcodeText.text
+        var url = "http://192.168.0.30:9090/store"
+        val jsonObject = JSONObject()
+        try {
+            jsonObject.put("isbn", isbn)
+            jsonObject.put("notion_database_id", "4f311bbe86ce4dd4bdae93fa1206328f")
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+        val JSON = MediaType.parse("application/json; charset=utf-8")
+        val body = RequestBody.create(JSON, jsonObject.toString())
+        val request = Request.Builder()
+            .url(url)
+            .put(body)
+            .build()
+
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "request failure: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                val jsonBody = response.body()?.let { Json.parseToJsonElement(it.string()) }
+                val bookJson = jsonBody?.jsonObject?.get("book")?.let { Json.parseToJsonElement(it.toString()) }
+                Log.i(TAG, "Response body: $jsonBody")
+                if (jsonBody != null) {
+                    var title = bookJson?.jsonObject?.get("title").toString()
+                    Log.i(TAG, "title: $title")
+                    textToSpeech?.speak(title,TextToSpeech.QUEUE_FLUSH,null, "");
+                    viewBinding.bookTitle.setBackgroundColor(Color.GREEN)
                 }
             }
         })
@@ -212,14 +275,17 @@ class MainActivity : AppCompatActivity() {
                             // See API reference for complete list of supported types
                             when (valueType) {
                                 Barcode.TYPE_ISBN -> {
-                                    viewBinding.barcodeText.text = barcode.rawValue
-                                    viewBinding.imageCaptureButton.isEnabled = true
-                                    viewBinding.imageCaptureButton.isClickable = true
+                                    if (viewBinding.barcodeText.text != barcode.rawValue) {
+                                        viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
+                                        viewBinding.bookTitle.text = "loading..."
+                                        lookupBarcode(barcode.rawValue)
+                                        viewBinding.barcodeText.text = barcode.rawValue
+                                    }
                                 }
                                 else -> {
                                     viewBinding.imageCaptureButton.isEnabled = false
                                     viewBinding.imageCaptureButton.isClickable = false
-                                    viewBinding.barcodeText.text = "please scan"
+                                    viewBinding.bookTitle.text = "please scan"
                                 }
                             }
                         }

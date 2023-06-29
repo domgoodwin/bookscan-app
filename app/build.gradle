@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    namespace 'com.example.homecontrol'
     compileSdk 33
 
     defaultConfig {
@@ -30,6 +31,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+//    composeOptions {
+//        kotlinCompilerExtensionVersion '1.4.5'
+//    }
 
     buildFeatures {
         viewBinding true
