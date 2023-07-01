@@ -137,30 +137,53 @@ class MainActivity : AppCompatActivity() {
                 val bookJson = jsonBody?.jsonObject?.get("book")?.let { Json.parseToJsonElement(it.toString()) }
                 Log.i(TAG, "Response body: $jsonBody")
                 if (jsonBody != null) {
+                    var title = ""
                     if (bookJson != null) {
-                        viewBinding.bookTitle.text = bookJson.jsonObject["title"].toString()
+                        title = bookJson.jsonObject["title"].toString()
                     }
-
-                    runOnUiThread {
                         var alreadyStored = jsonBody.jsonObject["already_stored"]?.jsonPrimitive?.boolean
                         Log.i(TAG, "stored: $alreadyStored")
                         if (alreadyStored == true) {
-                            viewBinding.bookTitle.setBackgroundColor(Color.CYAN)
-                            viewBinding.imageCaptureButton.isClickable = false
-                            viewBinding.imageCaptureButton.isEnabled = false
+                            setCurrentBook(title, BookState.OWNED)
                         } else {
-                            viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
-                            viewBinding.imageCaptureButton.isEnabled = true
-                            viewBinding.imageCaptureButton.isClickable = true
-                        }                    }
-
-
+                            setCurrentBook(title, BookState.NOTOWNED)
+                        }
                 }
             }
         })
     }
 
-    val JSON = MediaType.parse("application/json; charset=utf-8")
+    enum class BookState {
+        OWNED, SAVED, NOTOWNED, EMPTY
+    }
+    private fun setCurrentBook(title: String, bookState: BookState) {
+        runOnUiThread {
+        when(bookState) {
+            BookState.OWNED -> {
+                viewBinding.bookTitle.setBackgroundColor(Color.CYAN)
+                viewBinding.imageCaptureButton.isClickable = false
+                viewBinding.imageCaptureButton.isEnabled = false
+            }
+            BookState.NOTOWNED -> {
+                viewBinding.bookTitle.setBackgroundColor(Color.LTGRAY)
+                viewBinding.imageCaptureButton.isClickable = true
+                viewBinding.imageCaptureButton.isEnabled = true
+            }
+            BookState.SAVED -> {
+                viewBinding.bookTitle.setBackgroundColor(Color.GREEN)
+                viewBinding.imageCaptureButton.isClickable = false
+                viewBinding.imageCaptureButton.isEnabled = false
+            }
+            BookState.EMPTY -> {
+                viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
+                viewBinding.imageCaptureButton.isClickable = true
+                viewBinding.imageCaptureButton.isEnabled = true
+            }
+        }
+        viewBinding.bookTitle.text = title
+            }
+    }
+
     private fun storeBarcode() {
         Log.i(TAG, "store barcode")
         var isbn = viewBinding.barcodeText.text
@@ -242,9 +265,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-
-    private fun captureVideo() {}
-
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -266,26 +286,17 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setAnalyzer(cameraExecutor, BookBarcodeScanner { barcodes ->
                         for (barcode in barcodes) {
-                            val bounds = barcode.boundingBox
-                            val corners = barcode.cornerPoints
-
-                            val rawValue = barcode.rawValue
-
-                            val valueType = barcode.valueType
                             // See API reference for complete list of supported types
-                            when (valueType) {
+                            when (barcode.valueType) {
                                 Barcode.TYPE_ISBN -> {
                                     if (viewBinding.barcodeText.text != barcode.rawValue) {
-                                        viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
-                                        viewBinding.bookTitle.text = "loading..."
+                                        setCurrentBook("loading...", BookState.EMPTY)
                                         lookupBarcode(barcode.rawValue)
                                         viewBinding.barcodeText.text = barcode.rawValue
                                     }
                                 }
                                 else -> {
-                                    viewBinding.imageCaptureButton.isEnabled = false
-                                    viewBinding.imageCaptureButton.isClickable = false
-                                    viewBinding.bookTitle.text = "please scan"
+                                    setCurrentBook("please scan", BookState.EMPTY)
                                 }
                             }
                         }
