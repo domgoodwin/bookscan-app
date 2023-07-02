@@ -10,9 +10,7 @@
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-    </androidx.camera.view.PreviewView>
+        android:layout_height="match_parent" />
 
     <Button
         android:id="@+id/image_capture_button"
@@ -63,6 +61,22 @@
         android:gravity="center"
         android:text="@string/book_title"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/book_type"
+        style="@style/Widget.MaterialComponents.Snackbar.TextView"
+        android:layout_width="0dp"
+        android:layout_height="67dp"
+        android:layout_marginStart="350dp"
+        android:layout_marginEnd="25dp"
+        android:gravity="center"
+        android:text="@string/book_type"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

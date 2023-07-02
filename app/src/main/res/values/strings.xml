@@ -8,6 +8,7 @@
     <string name="back">Back</string>
     <string name="barcode">barcode</string>
     <string name="book_title">please scan barcode</string>
+    <string name="book_type">❓</string>
 
     <string name="process_barcode">Process Barcode</string>
 

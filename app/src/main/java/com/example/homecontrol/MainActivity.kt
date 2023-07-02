@@ -82,6 +82,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
 
     var textToSpeech: TextToSpeech? = null
+    var barcodeType: BarcodeType = BarcodeType.UNKNOWN
+
+    enum class ItemState {
+        OWNED, SAVED, NOTOWNED, EMPTY
+    }
+    enum class BarcodeType {
+        BOOK, PRODUCT, UNKNOWN
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,9 +127,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun lookupBarcode(isbn: String?) {
-        Log.i(TAG, "lookup barcode")
-        var url = "http://192.168.0.30:9090/lookup?isbn=$isbn"
+    private fun lookupBarcode(barcode: String?) {
+        var path = ""
+        var param = ""
+        when (barcodeType) {
+            BarcodeType.BOOK -> {
+                path = "book"
+                param = "isbn"
+            }
+            BarcodeType.PRODUCT -> {
+                path = "record"
+                param = "barcode"
+            }
+            else -> {
+                return
+            }
+        }
+        Log.i(TAG, "lookup $path $barcode")
+        var url = "http://192.168.0.30:9090/$path/lookup?$param=$barcode"
         val request = Request.Builder()
             .url(url)
             .get()
@@ -134,7 +157,7 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onResponse(call: Call, response: Response) {
                 val jsonBody = response.body()?.let { Json.parseToJsonElement(it.string()) }
-                val bookJson = jsonBody?.jsonObject?.get("book")?.let { Json.parseToJsonElement(it.toString()) }
+                val bookJson = jsonBody?.jsonObject?.get(path)?.let { Json.parseToJsonElement(it.toString()) }
                 Log.i(TAG, "Response body: $jsonBody")
                 if (jsonBody != null) {
                     var title = ""
@@ -144,50 +167,104 @@ class MainActivity : AppCompatActivity() {
                         var alreadyStored = jsonBody.jsonObject["already_stored"]?.jsonPrimitive?.boolean
                         Log.i(TAG, "stored: $alreadyStored")
                         if (alreadyStored == true) {
-                            setCurrentBook(title, BookState.OWNED)
+                            setCurrentThing(title, ItemState.OWNED)
                         } else {
-                            setCurrentBook(title, BookState.NOTOWNED)
+                            setCurrentThing(title, ItemState.NOTOWNED)
                         }
                 }
             }
         })
     }
 
-    enum class BookState {
-        OWNED, SAVED, NOTOWNED, EMPTY
-    }
-    private fun setCurrentBook(title: String, bookState: BookState) {
+    private fun setCurrentThing(title: String, itemState: ItemState) {
         runOnUiThread {
-        when(bookState) {
-            BookState.OWNED -> {
-                viewBinding.bookTitle.setBackgroundColor(Color.CYAN)
-                viewBinding.imageCaptureButton.isClickable = false
-                viewBinding.imageCaptureButton.isEnabled = false
+            when(itemState) {
+                ItemState.OWNED -> {
+                    viewBinding.bookTitle.setBackgroundColor(Color.CYAN)
+                    viewBinding.imageCaptureButton.isClickable = false
+                    viewBinding.imageCaptureButton.isEnabled = false
+                }
+                ItemState.NOTOWNED -> {
+                    viewBinding.bookTitle.setBackgroundColor(Color.LTGRAY)
+                    viewBinding.imageCaptureButton.isClickable = true
+                    viewBinding.imageCaptureButton.isEnabled = true
+                }
+                ItemState.SAVED -> {
+                    viewBinding.bookTitle.setBackgroundColor(Color.GREEN)
+                    viewBinding.imageCaptureButton.isClickable = false
+                    viewBinding.imageCaptureButton.isEnabled = false
+                }
+                ItemState.EMPTY -> {
+                    viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
+                    viewBinding.imageCaptureButton.isClickable = false
+                    viewBinding.imageCaptureButton.isEnabled = false
+                }
             }
-            BookState.NOTOWNED -> {
-                viewBinding.bookTitle.setBackgroundColor(Color.LTGRAY)
-                viewBinding.imageCaptureButton.isClickable = true
-                viewBinding.imageCaptureButton.isEnabled = true
-            }
-            BookState.SAVED -> {
-                viewBinding.bookTitle.setBackgroundColor(Color.GREEN)
-                viewBinding.imageCaptureButton.isClickable = false
-                viewBinding.imageCaptureButton.isEnabled = false
-            }
-            BookState.EMPTY -> {
-                viewBinding.bookTitle.setBackgroundColor(Color.WHITE)
-                viewBinding.imageCaptureButton.isClickable = true
-                viewBinding.imageCaptureButton.isEnabled = true
-            }
+            viewBinding.bookTitle.text = title
         }
-        viewBinding.bookTitle.text = title
-            }
     }
 
+
     private fun storeBarcode() {
+        runOnUiThread {
+            when (barcodeType) {
+                BarcodeType.BOOK -> {
+                    storeBook()
+                }
+
+                BarcodeType.PRODUCT -> {
+                    storeVinyl()
+                }
+
+                else -> {
+                    // Shouldn't button be disabled?
+                }
+            }
+        }
+
+    }
+
+    private fun storeVinyl() {
+        Log.i(TAG, "store barcode")
+        var barcode = viewBinding.barcodeText.text
+        var url = "http://192.168.0.30:9090/record/store"
+        val jsonObject = JSONObject()
+        try {
+            jsonObject.put("barcode", barcode)
+            jsonObject.put("notion_database_id", "0821a1067b414e19923c4371250c8128")
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+        val JSON = MediaType.parse("application/json; charset=utf-8")
+        val body = RequestBody.create(JSON, jsonObject.toString())
+        val request = Request.Builder()
+            .url(url)
+            .put(body)
+            .build()
+
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "request failure: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                val jsonBody = response.body()?.let { Json.parseToJsonElement(it.string()) }
+                val bookJson = jsonBody?.jsonObject?.get("record")?.let { Json.parseToJsonElement(it.toString()) }
+                Log.i(TAG, "Response body: $jsonBody")
+                if (jsonBody != null) {
+                    var title = bookJson?.jsonObject?.get("title").toString()
+                    Log.i(TAG, "title: $title")
+                    textToSpeech?.speak(title,TextToSpeech.QUEUE_FLUSH,null, "");
+                    viewBinding.bookTitle.setBackgroundColor(Color.GREEN)
+                }
+            }
+        })
+    }
+    private fun storeBook() {
         Log.i(TAG, "store barcode")
         var isbn = viewBinding.barcodeText.text
-        var url = "http://192.168.0.30:9090/store"
+        var url = "http://192.168.0.30:9090/book/store"
         val jsonObject = JSONObject()
         try {
             jsonObject.put("isbn", isbn)
@@ -286,17 +363,26 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setAnalyzer(cameraExecutor, BookBarcodeScanner { barcodes ->
                         for (barcode in barcodes) {
-                            // See API reference for complete list of supported types
-                            when (barcode.valueType) {
-                                Barcode.TYPE_ISBN -> {
-                                    if (viewBinding.barcodeText.text != barcode.rawValue) {
-                                        setCurrentBook("loading...", BookState.EMPTY)
+                            // See API reference for complete list of supported type
+                            if (viewBinding.barcodeText.text != barcode.rawValue) {
+                                setCurrentThing("loading...", ItemState.EMPTY)
+                                when (barcode.valueType) {
+                                    Barcode.TYPE_ISBN -> {
+                                        viewBinding.bookType.text = "\uD83D\uDCDA"
+                                        barcodeType = BarcodeType.BOOK
                                         lookupBarcode(barcode.rawValue)
                                         viewBinding.barcodeText.text = barcode.rawValue
                                     }
-                                }
-                                else -> {
-                                    setCurrentBook("please scan", BookState.EMPTY)
+                                    Barcode.TYPE_PRODUCT -> {
+                                        viewBinding.bookType.text = "\uD83D\uDCBD"
+                                        barcodeType = BarcodeType.PRODUCT
+                                        lookupBarcode(barcode.rawValue)
+                                        viewBinding.barcodeText.text = barcode.rawValue
+                                    }
+                                    else -> {
+                                        Log.i(TAG, "unknown type, is: ${barcode.valueType}")
+                                        setCurrentThing("please scan", ItemState.EMPTY)
+                                    }
                                 }
                             }
                         }
