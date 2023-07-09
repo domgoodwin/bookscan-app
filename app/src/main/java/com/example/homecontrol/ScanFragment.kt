@@ -2,6 +2,7 @@ package com.example.homecontrol
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipData.Item
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
@@ -172,7 +173,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     var barcodeType: BarcodeType = BarcodeType.UNKNOWN
 
     enum class ItemState {
-        OWNED, SAVED, NOTOWNED, EMPTY
+        OWNED, SAVED, NOTOWNED, EMPTY, ERROR
     }
     enum class BarcodeType {
         BOOK, PRODUCT, UNKNOWN
@@ -349,14 +350,14 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                                         Barcode.TYPE_ISBN -> {
                                             fragBinding.bookType.text = "\uD83D\uDCDA"
                                             barcodeType = BarcodeType.BOOK
-                                            lookupBarcode(barcode.rawValue)
+                                            lookupBarcode(barcode.rawValue, BarcodeType.BOOK)
                                             fragBinding.barcodeText.text = barcode.rawValue
                                         }
 
                                         Barcode.TYPE_PRODUCT -> {
                                             fragBinding.bookType.text = "\uD83D\uDCBD"
                                             barcodeType = BarcodeType.PRODUCT
-                                            lookupBarcode(barcode.rawValue)
+                                            lookupBarcode(barcode.rawValue, BarcodeType.PRODUCT )
                                             fragBinding.barcodeText.text = barcode.rawValue
                                         }
 
@@ -412,14 +413,41 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
     }
 
+    private fun getSharedPrefNotionValue(type: BarcodeType): String? {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
+        if (sharedPref != null) {
+            when (type) {
+                BarcodeType.BOOK -> {
+                    val value = sharedPref.getString(getString(R.string.books_notion_database_id), "")
+                    Log.e(TAG, "book: $value")
+                    return value
+                }
+
+                BarcodeType.PRODUCT -> {
+                    val value = sharedPref.getString(getString(R.string.records_notion_database_id), "")
+                    Log.e(TAG, "record: $value")
+                    return value
+                }
+
+                else -> {
+                    Log.e(TAG, "type is unknown")
+                    return ""
+                }
+            }
+        }
+        Log.e(TAG, "prefs is null")
+        return ""
+    }
+
     private fun storeVinyl() {
+        val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.PRODUCT)
         Log.i(TAG, "store barcode")
         var barcode = fragBinding.barcodeText.text
         var url = "http://192.168.0.30:9090/record/store"
         val jsonObject = JSONObject()
         try {
             jsonObject.put("barcode", barcode)
-            jsonObject.put("notion_database_id", "0821a1067b414e19923c4371250c8128")
+            jsonObject.put("notion_database_id", notionDatabaseID)
         } catch (e: JSONException) {
             e.printStackTrace()
         }
@@ -450,13 +478,14 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         })
     }
     private fun storeBook() {
+        val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.BOOK)
         Log.i(TAG, "store barcode")
         var isbn = fragBinding.barcodeText.text
         var url = "http://192.168.0.30:9090/book/store"
         val jsonObject = JSONObject()
         try {
             jsonObject.put("isbn", isbn)
-            jsonObject.put("notion_database_id", "4f311bbe86ce4dd4bdae93fa1206328f")
+            jsonObject.put("notion_database_id", notionDatabaseID)
         } catch (e: JSONException) {
             e.printStackTrace()
         }
@@ -487,9 +516,15 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         })
     }
 
-    private fun lookupBarcode(barcode: String?) {
+    private fun lookupBarcode(barcode: String?, type: BarcodeType) {
         var path = ""
         var param = ""
+        val databaseID = getSharedPrefNotionValue(barcodeType)
+        if (databaseID == null || databaseID == "") {
+            Log.e(TAG, "error, database ID not set?")
+            setCurrentThing("Failed to get database ID", ItemState.ERROR)
+            return
+        }
         when (barcodeType) {
             BarcodeType.BOOK -> {
                 path = "book"
@@ -503,8 +538,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 return
             }
         }
-        Log.i(TAG, "lookup $path $barcode")
-        var url = "http://192.168.0.30:9090/$path/lookup?$param=$barcode"
+        Log.i(TAG, "lookup $path $barcode $databaseID")
+        var url = "http://192.168.0.30:9090/$path/lookup?$param=$barcode&database_id=$databaseID"
         val request = Request.Builder()
             .url(url)
             .get()
@@ -559,6 +594,12 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
                 ItemState.EMPTY -> {
                     _binding?.bookTitle?.setBackgroundColor(Color.WHITE)
+                    _binding?.imageCaptureButton?.isClickable = false
+                    _binding?.imageCaptureButton?.isEnabled = false
+                }
+                ItemState.ERROR -> {
+                    _binding?.bookTitle?.setBackgroundColor(Color.WHITE)
+                    _binding?.bookTitle?.setTextColor(Color.RED)
                     _binding?.imageCaptureButton?.isClickable = false
                     _binding?.imageCaptureButton?.isEnabled = false
                 }

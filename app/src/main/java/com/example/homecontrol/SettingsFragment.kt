@@ -1,5 +1,6 @@
 package com.example.homecontrol
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
@@ -41,7 +42,7 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
 
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key:String) {
-        if (key != getString(R.string.books_notion_database_id) && key != getString(R.string.records_notion_database_id)) {
+        if (key != getString(R.string.books_notion_database_link_id) && key != getString(R.string.records_notion_database_link_id)) {
             Log.e("logtag", "dropping event $key")
             return
         }
@@ -53,19 +54,27 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         val idPart = urlParts[urlParts.size-1].split("?")[0]
 
         var pref: String = ""
-        if (key == getString(R.string.books_notion_database_id)) {
-            pref = "books_database"
-        } else if (key == getString(R.string.records_notion_database_id)) {
-            pref = "records_database"
+        if (key == getString(R.string.books_notion_database_link_id)) {
+            pref = getString(R.string.books_notion_database_id)
+        } else if (key == getString(R.string.records_notion_database_link_id)) {
+            pref = getString(R.string.records_notion_database_id)
         } else {
             Log.e("logtag", "didn't find field to update")
         }
         Log.e("logtag", "updating field $pref")
-        val mySnackbar = view?.let { Snackbar.make(it, "qwdqwdqwdqw", BaseTransientBottomBar.LENGTH_LONG) }
-        if (mySnackbar != null) {
-            mySnackbar.show()
-        }
 
+        // for showing errors on DB
+//        val mySnackbar = view?.let { Snackbar.make(it, "qwdqwdqwdqw", BaseTransientBottomBar.LENGTH_LONG) }
+//        if (mySnackbar != null) {
+//            mySnackbar.show()
+//        }
+
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        with (sharedPref.edit()) {
+            putString(pref, idPart)
+            commit()
+        }
+        // Commit it to the private default and this specific one so it shows up
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
         editor.putString(pref, idPart)
         editor.commit()

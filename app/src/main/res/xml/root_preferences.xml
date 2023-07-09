@@ -3,7 +3,7 @@
     <PreferenceCategory app:title="@string/settings_header">
 
         <EditTextPreference
-            app:key="@string/books_notion_database_id"
+            app:key="@string/books_notion_database_link_id"
             app:title="@string/books_notion_database_link"
             app:useSimpleSummaryProvider="true"
 
@@ -11,20 +11,20 @@
 
 
         <EditTextPreference
-            app:key="books_database"
+            app:key="@string/books_notion_database_id"
             app:title="@string/books_notion_database"
             app:useSimpleSummaryProvider="true"
             app:enabled="false"
             />
 
         <EditTextPreference
-            app:key="@string/records_notion_database_id"
+            app:key="@string/records_notion_database_link_id"
             app:title="@string/records_notion_database_link"
             app:useSimpleSummaryProvider="true"
             />
 
         <EditTextPreference
-            app:key="records_database"
+            app:key="@string/records_notion_database_id"
             app:title="@string/records_notion_database"
             app:useSimpleSummaryProvider="true"
             app:enabled="false"

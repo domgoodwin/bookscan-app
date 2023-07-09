@@ -57,10 +57,12 @@
     <!-- Messages Preferences -->
     <string name="books_notion_database">Books Notion Database</string>
     <string name="books_notion_database_id">books_notion_database</string>
+    <string name="books_notion_database_link_id">books_notion_database_link</string>
     <string name="books_notion_database_link">Books Notion Database Link</string>
 
     <string name="records_notion_database">Records Notion Database</string>
     <string name="records_notion_database_id">records_notion_database</string>
+    <string name="records_notion_database_link_id">records_notion_database_link</string>
     <string name="records_notion_database_link">Records Notion Database Link</string>
 
     <string name="dummy_button">Dummy Button</string>
