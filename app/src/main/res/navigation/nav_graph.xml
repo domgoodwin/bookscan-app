@@ -3,26 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/ActionList">
+    app:startDestination="@+id/settingsFragment">
+
 
     <fragment
-        android:id="@+id/ActionList"
-        android:name="com.example.homecontrol.ActionList"
-        android:label="@string/action_list_fragment_label"
-        tools:layout="@layout/fragment_action_list">
-
-        <action
-            android:id="@+id/action_ActionList_to_BarcodeScan"
-            app:destination="@id/BarcodeScan" />
-    </fragment>
+        android:id="@+id/settingsFragment"
+        android:name="com.example.homecontrol.SettingsFragment"
+        android:label="SettingsFragment" />
     <fragment
-        android:id="@+id/BarcodeScan"
-        android:name="com.example.homecontrol.BarcodeScan"
-        android:label="@string/barcode_scan_fragment_label"
-        tools:layout="@layout/fragment_barcode_scan">
-
+        android:id="@+id/scanFragment"
+        android:name="com.example.homecontrol.ScanFragment"
+        android:label="fragment_scan"
+        tools:layout="@layout/fragment_scan" >
         <action
-            android:id="@+id/action_BarcodeScan_to_ActionList"
-            app:destination="@id/ActionList" />
+            android:id="@+id/action_scanFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_scanFragment_to_settingsFragment2"
+            app:destination="@id/settingsFragment" />
     </fragment>
+
 </navigation>
