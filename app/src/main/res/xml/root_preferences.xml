@@ -30,6 +30,13 @@
             app:enabled="false"
             />
 
+        <EditTextPreference
+            app:key="@string/api_url"
+            app:title="@string/api_url_title"
+            app:defaultValue="@string/api_url_default"
+            app:useSimpleSummaryProvider="true"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

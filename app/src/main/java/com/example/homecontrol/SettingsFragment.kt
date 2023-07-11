@@ -42,6 +42,11 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
 
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key:String) {
+        if (key == getString(R.string.api_url)) {
+            var prefValue = sharedPreferences.getString(key, "").toString()
+            setSharedPreferences(sharedPreferences, getString(R.string.api_url),prefValue)
+            return
+        }
         if (key != getString(R.string.books_notion_database_link_id) && key != getString(R.string.records_notion_database_link_id)) {
             Log.e("logtag", "dropping event $key")
             return
@@ -61,22 +66,21 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         } else {
             Log.e("logtag", "didn't find field to update")
         }
-        Log.e("logtag", "updating field $pref")
+        setSharedPreferences(sharedPreferences, pref, idPart)
+    }
 
-        // for showing errors on DB
-//        val mySnackbar = view?.let { Snackbar.make(it, "qwdqwdqwdqw", BaseTransientBottomBar.LENGTH_LONG) }
-//        if (mySnackbar != null) {
-//            mySnackbar.show()
-//        }
+    private fun setSharedPreferences(sharedPreferences: SharedPreferences, key:String, value:String) {
+        Log.e("logtag", "updating field $key")
+
 
         val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
         with (sharedPref.edit()) {
-            putString(pref, idPart)
+            putString(key, value)
             commit()
         }
         // Commit it to the private default and this specific one so it shows up
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
-        editor.putString(pref, idPart)
+        editor.putString(key, value)
         editor.commit()
         reload()
     }

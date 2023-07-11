@@ -173,7 +173,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     var barcodeType: BarcodeType = BarcodeType.UNKNOWN
 
     enum class ItemState {
-        OWNED, SAVED, NOTOWNED, EMPTY, ERROR
+        OWNED, SAVED, SAVING, NOTOWNED, EMPTY, ERROR
     }
     enum class BarcodeType {
         BOOK, PRODUCT, UNKNOWN
@@ -418,15 +418,11 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         if (sharedPref != null) {
             when (type) {
                 BarcodeType.BOOK -> {
-                    val value = sharedPref.getString(getString(R.string.books_notion_database_id), "")
-                    Log.e(TAG, "book: $value")
-                    return value
+                    return getSharedPref(getString(R.string.books_notion_database_id))
                 }
 
                 BarcodeType.PRODUCT -> {
-                    val value = sharedPref.getString(getString(R.string.records_notion_database_id), "")
-                    Log.e(TAG, "record: $value")
-                    return value
+                    return getSharedPref(getString(R.string.records_notion_database_id))
                 }
 
                 else -> {
@@ -439,11 +435,19 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         return ""
     }
 
+    private fun getSharedPref(key: String): String? {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
+        val value = sharedPref?.getString(key, "")
+        Log.e(TAG, "shared-pref, $key:$value")
+        return value
+    }
+
     private fun storeVinyl() {
         val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.PRODUCT)
+        val baseURL = getSharedPref(getString(R.string.api_url))
         Log.i(TAG, "store barcode")
         var barcode = fragBinding.barcodeText.text
-        var url = "http://192.168.0.30:9090/record/store"
+        var url = "$baseURL/record/store"
         val jsonObject = JSONObject()
         try {
             jsonObject.put("barcode", barcode)
@@ -481,7 +485,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.BOOK)
         Log.i(TAG, "store barcode")
         var isbn = fragBinding.barcodeText.text
-        var url = "http://192.168.0.30:9090/book/store"
+        val baseURL = getSharedPref(getString(R.string.api_url))
+        var url = "$baseURL/book/store"
         val jsonObject = JSONObject()
         try {
             jsonObject.put("isbn", isbn)
@@ -539,7 +544,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             }
         }
         Log.i(TAG, "lookup $path $barcode $databaseID")
-        var url = "http://192.168.0.30:9090/$path/lookup?$param=$barcode&database_id=$databaseID"
+        val baseURL = getSharedPref(getString(R.string.api_url))
+        var url = "$baseURL/$path/lookup?$param=$barcode&database_id=$databaseID"
         val request = Request.Builder()
             .url(url)
             .get()
@@ -576,24 +582,35 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             when(itemState) {
                 ItemState.OWNED -> {
                     _binding?.bookTitle?.setBackgroundColor(Color.CYAN)
+                    _binding?.bookTitle?.setTextColor(Color.BLACK)
                     _binding?.imageCaptureButton?.isClickable = false
                     _binding?.imageCaptureButton?.isEnabled = false
                 }
 
                 ItemState.NOTOWNED -> {
                     _binding?.bookTitle?.setBackgroundColor(Color.LTGRAY)
+                    _binding?.bookTitle?.setTextColor(Color.BLACK)
                     _binding?.imageCaptureButton?.isClickable = true
                     _binding?.imageCaptureButton?.isEnabled = true
                 }
 
                 ItemState.SAVED -> {
                     _binding?.bookTitle?.setBackgroundColor(Color.GREEN)
+                    _binding?.bookTitle?.setTextColor(Color.BLACK)
+                    _binding?.imageCaptureButton?.isClickable = false
+                    _binding?.imageCaptureButton?.isEnabled = false
+                }
+
+                ItemState.SAVING -> {
+                    _binding?.bookTitle?.setBackgroundColor(Color.YELLOW)
+                    _binding?.bookTitle?.setTextColor(Color.BLACK)
                     _binding?.imageCaptureButton?.isClickable = false
                     _binding?.imageCaptureButton?.isEnabled = false
                 }
 
                 ItemState.EMPTY -> {
                     _binding?.bookTitle?.setBackgroundColor(Color.WHITE)
+                    _binding?.bookTitle?.setTextColor(Color.BLACK)
                     _binding?.imageCaptureButton?.isClickable = false
                     _binding?.imageCaptureButton?.isEnabled = false
                 }
