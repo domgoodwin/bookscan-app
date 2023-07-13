@@ -69,6 +69,11 @@
     <string name="api_url">api_url</string>
     <string name="api_url_default">http://192.168.0.240:8443</string>
 
+
+    <string name="product_types">product_types</string>
+    <string name="product_types_title">Product Types</string>
+    <string name="product_types_default">All</string>
+
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 

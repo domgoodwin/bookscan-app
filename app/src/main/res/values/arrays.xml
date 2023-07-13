@@ -9,4 +9,14 @@
         <item>reply</item>
         <item>reply_all</item>
     </string-array>
+
+    <string-array name="product_types_values">
+        <item>vinyl</item>
+        <item>book</item>
+    </string-array>
+
+    <string-array name="product_types">
+        <item>Vinyl 💽</item>
+        <item>Book 📕</item>
+    </string-array>
 </resources>

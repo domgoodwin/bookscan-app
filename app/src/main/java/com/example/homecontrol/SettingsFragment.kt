@@ -11,6 +11,7 @@ import androidx.preference.PreferenceFragmentCompat
 import com.example.homecontrol.databinding.FragmentScanBinding
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
+import java.util.HashSet
 
 class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -47,6 +48,13 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
             setSharedPreferences(sharedPreferences, getString(R.string.api_url),prefValue)
             return
         }
+        if (key == getString(R.string.product_types)) {
+            val prefValues = sharedPreferences.getStringSet(getString(R.string.product_types), HashSet<String>())
+            if (prefValues != null) {
+                setSharedPreferencesSet(sharedPreferences, getString(R.string.product_types), prefValues)
+            }
+            return
+        }
         if (key != getString(R.string.books_notion_database_link_id) && key != getString(R.string.records_notion_database_link_id)) {
             Log.e("logtag", "dropping event $key")
             return
@@ -81,6 +89,22 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         // Commit it to the private default and this specific one so it shows up
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
         editor.putString(key, value)
+        editor.commit()
+        reload()
+    }
+
+    private fun setSharedPreferencesSet(sharedPreferences: SharedPreferences, key:String, value:Set<String>) {
+        Log.e("logtag", "updating field $key : $value")
+
+
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        with (sharedPref.edit()) {
+            putStringSet(key, value)
+            commit()
+        }
+        // Commit it to the private default and this specific one so it shows up
+        val editor: SharedPreferences.Editor = sharedPreferences.edit()
+        editor.putStringSet(key, value)
         editor.commit()
         reload()
     }

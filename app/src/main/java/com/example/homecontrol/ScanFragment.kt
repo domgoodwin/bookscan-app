@@ -2,9 +2,7 @@ package com.example.homecontrol
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ClipData.Item
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -27,15 +25,10 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.Recorder
-import androidx.camera.video.Recording
-import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import com.example.homecontrol.databinding.ActivityMainBinding
 import com.example.homecontrol.databinding.FragmentScanBinding
 import com.google.mlkit.common.MlKitException
@@ -57,6 +50,8 @@ import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.time.LocalDateTime
+import java.util.HashSet
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -185,6 +180,10 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private var lookupSince = LocalDateTime.now()
+    private var lastLookedUpBarcode = ""
+    private var currentState = ItemState.EMPTY
 
     private fun requestPermissions() {
         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
@@ -344,21 +343,14 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                         it.setAnalyzer(cameraExecutor, BookBarcodeScanner { barcodes ->
                             for (barcode in barcodes) {
                                 // See API reference for complete list of supported type
-                                if (fragBinding.barcodeText.text != barcode.rawValue) {
-                                    setCurrentThing("loading...", ItemState.EMPTY)
+                                if (fragBinding.barcodeText.text != barcode.rawValue || lastLookedUpBarcode != barcode.rawValue) {
                                     when (barcode.valueType) {
                                         Barcode.TYPE_ISBN -> {
-                                            fragBinding.bookType.text = "\uD83D\uDCDA"
                                             barcodeType = BarcodeType.BOOK
-                                            lookupBarcode(barcode.rawValue, BarcodeType.BOOK)
-                                            fragBinding.barcodeText.text = barcode.rawValue
                                         }
 
                                         Barcode.TYPE_PRODUCT -> {
-                                            fragBinding.bookType.text = "\uD83D\uDCBD"
                                             barcodeType = BarcodeType.PRODUCT
-                                            lookupBarcode(barcode.rawValue, BarcodeType.PRODUCT )
-                                            fragBinding.barcodeText.text = barcode.rawValue
                                         }
 
                                         else -> {
@@ -369,6 +361,25 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                                             setCurrentThing("please scan", ItemState.EMPTY)
                                         }
                                     }
+                                    // Check the product type is enabled in settings
+                                    if (checkBarcodeTypeEnabled(barcodeType)) {
+                                        when (barcodeType) {
+                                            BarcodeType.BOOK -> {
+                                                fragBinding.bookType.text = "\uD83D\uDCDA"
+                                            }
+                                            BarcodeType.PRODUCT -> {
+                                                fragBinding.bookType.text = "\uD83D\uDCBD"
+                                            }
+
+                                            else -> {}
+                                        }
+                                        lookupBarcode(barcode.rawValue, barcodeType)
+                                        fragBinding.barcodeText.text = barcode.rawValue
+                                    } else {
+                                        Log.i(TAG, "product type disabled $barcodeType")
+                                        continue
+                                    }
+
                                 }
                             }
                         })
@@ -396,6 +407,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     }
 
     private fun storeBarcode() {
+        setCurrentThing("Saving", ItemState.SAVING)
             when (barcodeType) {
                 BarcodeType.BOOK -> {
                     storeBook()
@@ -414,25 +426,38 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     }
 
     private fun getSharedPrefNotionValue(type: BarcodeType): String? {
+        return when (type) {
+            BarcodeType.BOOK -> {
+                getSharedPref(getString(R.string.books_notion_database_id))
+            }
+
+            BarcodeType.PRODUCT -> {
+                getSharedPref(getString(R.string.records_notion_database_id))
+            }
+
+            else -> {
+                Log.e(TAG, "type is unknown")
+                ""
+            }
+        }
+    }
+
+    private fun checkBarcodeTypeEnabled(type: BarcodeType): Boolean {
         val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
         if (sharedPref != null) {
-            when (type) {
-                BarcodeType.BOOK -> {
-                    return getSharedPref(getString(R.string.books_notion_database_id))
-                }
-
-                BarcodeType.PRODUCT -> {
-                    return getSharedPref(getString(R.string.records_notion_database_id))
-                }
-
-                else -> {
-                    Log.e(TAG, "type is unknown")
-                    return ""
+            val values = sharedPref.getStringSet(getString(R.string.product_types), HashSet<String>())
+            if (values != null) {
+                for (v in values) {
+                    if (type == BarcodeType.PRODUCT && v == "vinyl") {
+                        return true
+                    }
+                    if (type == BarcodeType.BOOK && v == "book") {
+                        return true
+                    }
                 }
             }
         }
-        Log.e(TAG, "prefs is null")
-        return ""
+        return false
     }
 
     private fun getSharedPref(key: String): String? {
@@ -476,7 +501,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                     var title = bookJson?.jsonObject?.get("title").toString()
                     Log.i(TAG, "title: $title")
                     textToSpeech?.speak(title,TextToSpeech.QUEUE_FLUSH,null, "");
-                    fragBinding.bookTitle.setBackgroundColor(Color.GREEN)
+                    setCurrentThing(title, ItemState.SAVED)
                 }
             }
         })
@@ -515,13 +540,20 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                     var title = bookJson?.jsonObject?.get("title").toString()
                     Log.i(TAG, "title: $title")
                     textToSpeech?.speak(title,TextToSpeech.QUEUE_FLUSH,null, "");
-                    _binding?.bookTitle?.setBackgroundColor(Color.GREEN)
+                    setCurrentThing(title, ItemState.SAVED)
                 }
             }
         })
     }
 
     private fun lookupBarcode(barcode: String?, type: BarcodeType) {
+        // if last lookup time isn't at least 5s in the past, do nothing
+        // this prevents constant barcode lookups
+        if (!lookupSince.isBefore(LocalDateTime.now().minusSeconds(1))) {
+            Log.i(TAG, "skipping lookup $lookupSince")
+            return
+        }
+        setCurrentThing("loading...", ItemState.EMPTY)
         var path = ""
         var param = ""
         val databaseID = getSharedPrefNotionValue(barcodeType)
@@ -557,6 +589,10 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 Log.e(TAG, "request failure: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                lookupSince = LocalDateTime.now()
+                if (barcode != null) {
+                    lastLookedUpBarcode = barcode
+                }
                 val jsonBody = response.body()?.let { Json.parseToJsonElement(it.string()) }
                 val bookJson = jsonBody?.jsonObject?.get(path)?.let { Json.parseToJsonElement(it.toString()) }
                 Log.i(TAG, "Response body: $jsonBody")
@@ -622,6 +658,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 }
             }
             _binding?.bookTitle?.text = title
+            currentState = itemState
         }
     }
 

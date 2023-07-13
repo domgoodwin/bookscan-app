@@ -37,6 +37,14 @@
             app:useSimpleSummaryProvider="true"
             />
 
+        <MultiSelectListPreference
+            app:key="@string/product_types"
+            app:title="@string/product_types_title"
+            app:entries="@array/product_types"
+            app:entryValues="@array/product_types_values"
+            app:defaultValue="@array/product_types_values"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
