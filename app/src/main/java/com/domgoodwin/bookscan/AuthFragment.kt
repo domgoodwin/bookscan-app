@@ -1,16 +1,11 @@
-package com.example.homecontrol
+package com.domgoodwin.bookscan
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
-import com.example.homecontrol.databinding.FragmentAuthBinding
-import java.net.URL
+import com.domgoodwin.bookscan.databinding.FragmentAuthBinding
 
 
 private const val REAUTH = "REAUTH"

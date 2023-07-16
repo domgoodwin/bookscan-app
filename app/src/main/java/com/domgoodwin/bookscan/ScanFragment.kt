@@ -1,4 +1,4 @@
-package com.example.homecontrol
+package com.domgoodwin.bookscan
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -29,8 +29,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import com.example.homecontrol.databinding.ActivityMainBinding
-import com.example.homecontrol.databinding.FragmentScanBinding
+import com.domgoodwin.bookscan.databinding.ActivityMainBinding
+import com.domgoodwin.bookscan.databinding.FragmentScanBinding
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -453,23 +453,6 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
         }
 
-        private fun getSharedPrefNotionValue(type: BarcodeType): String? {
-            return when (type) {
-                BarcodeType.BOOK -> {
-                    getSharedPref(getString(R.string.books_notion_database_id))
-                }
-
-                BarcodeType.PRODUCT -> {
-                    getSharedPref(getString(R.string.records_notion_database_id))
-                }
-
-                else -> {
-                    Log.e(TAG, "type is unknown")
-                    ""
-                }
-            }
-        }
-
         private fun checkBarcodeTypeEnabled(type: BarcodeType): Boolean {
             val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
             if (sharedPref != null) {
@@ -497,14 +480,12 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         }
 
         private fun storeVinyl(barcode: String) {
-            val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.PRODUCT)
             val baseURL = getSharedPref(getString(R.string.api_url))
             Log.i(TAG, "store barcode")
             var url = "$baseURL/record/store"
             val jsonObject = JSONObject()
             try {
                 jsonObject.put("barcode", barcode)
-                jsonObject.put("notion_database_id", notionDatabaseID)
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
@@ -540,14 +521,12 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         }
 
         private fun storeBook(isbn: String) {
-            val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.BOOK)
             Log.i(TAG, "store barcode: $isbn")
             val baseURL = getSharedPref(getString(R.string.api_url))
             var url = "$baseURL/book/store"
             val jsonObject = JSONObject()
             try {
                 jsonObject.put("isbn", isbn)
-                jsonObject.put("notion_database_id", notionDatabaseID)
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
@@ -592,12 +571,6 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             setCurrentThing("loading...", ItemState.EMPTY)
             var path = ""
             var param = ""
-            val databaseID = getSharedPrefNotionValue(barcodeType)
-            if (databaseID == null || databaseID == "") {
-                Log.e(TAG, "error, database ID not set?")
-                setCurrentThing("Failed to get database ID", ItemState.ERROR)
-                return
-            }
             when (barcodeType) {
                 BarcodeType.BOOK -> {
                     path = "book"
@@ -613,9 +586,9 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                     return
                 }
             }
-            Log.i(TAG, "lookup $path $barcode $databaseID")
+            Log.i(TAG, "lookup $path $barcode")
             val baseURL = getSharedPref(getString(R.string.api_url))
-            var url = "$baseURL/$path/lookup?$param=$barcode&database_id=$databaseID"
+            var url = "$baseURL/$path/lookup?$param=$barcode"
             val request = Request.Builder()
                 .url(url)
                 .get()
@@ -720,11 +693,11 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
                 // Drop frame if an image has been analyzed less than ANALYSIS_DELAY_MS ms ago
                 if (lastAnalysisTime.isAfter(now.minusSeconds(1))) {
-                    Log.i(TAG, "dropping analyse event $lastAnalysisTime $now")
+                    Log.d(TAG, "dropping analyse event $lastAnalysisTime $now")
                     imageProxy.close();
                     return
                 }
-                Log.i(TAG, "analyse event $lastAnalysisTime $now")
+                Log.d(TAG, "analyse event $lastAnalysisTime $now")
 
 
                 lastAnalysisTime = now;

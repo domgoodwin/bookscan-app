@@ -1,4 +1,4 @@
-package com.example.homecontrol
+package com.domgoodwin.bookscan
 
 import org.junit.Test
 

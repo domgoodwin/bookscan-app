@@ -1,6 +1,6 @@
-package com.example.homecontrol.data
+package com.domgoodwin.bookscan.data
 
-import com.example.homecontrol.data.model.LoggedInUser
+import com.domgoodwin.bookscan.data.model.LoggedInUser
 
 /**
  * Class that requests authentication and user information from the remote data source and

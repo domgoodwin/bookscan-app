@@ -32,7 +32,7 @@ xmlns:tools="http://schemas.android.com/tools">
 
 
     <activity
-        android:name="com.example.homecontrol.MainActivity"
+        android:name="com.domgoodwin.bookscan.MainActivity"
         android:exported="true"
         android:theme="@style/Theme.HomeControl">
         <intent-filter>
@@ -43,7 +43,7 @@ xmlns:tools="http://schemas.android.com/tools">
 
     </activity>
     <activity
-        android:name="com.example.homecontrol.CallbackAuth"
+        android:name="com.domgoodwin.bookscan.CallbackAuth"
         android:exported="true"
         android:label="@string/title_activity_callback_auth"
         android:theme="@style/Theme.HomeControl" >

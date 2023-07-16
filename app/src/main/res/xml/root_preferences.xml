@@ -2,33 +2,33 @@
 
     <PreferenceCategory app:title="@string/settings_header">
 
-        <EditTextPreference
-            app:key="@string/books_notion_database_link_id"
-            app:title="@string/books_notion_database_link"
-            app:useSimpleSummaryProvider="true"
+<!--        <EditTextPreference-->
+<!--            app:key="@string/books_notion_database_link_id"-->
+<!--            app:title="@string/books_notion_database_link"-->
+<!--            app:useSimpleSummaryProvider="true"-->
 
-            />
+<!--            />-->
 
 
-        <EditTextPreference
-            app:key="@string/books_notion_database_id"
-            app:title="@string/books_notion_database"
-            app:useSimpleSummaryProvider="true"
-            app:enabled="false"
-            />
+<!--        <EditTextPreference-->
+<!--            app:key="@string/books_notion_database_id"-->
+<!--            app:title="@string/books_notion_database"-->
+<!--            app:useSimpleSummaryProvider="true"-->
+<!--            app:enabled="false"-->
+<!--            />-->
 
-        <EditTextPreference
-            app:key="@string/records_notion_database_link_id"
-            app:title="@string/records_notion_database_link"
-            app:useSimpleSummaryProvider="true"
-            />
+<!--        <EditTextPreference-->
+<!--            app:key="@string/records_notion_database_link_id"-->
+<!--            app:title="@string/records_notion_database_link"-->
+<!--            app:useSimpleSummaryProvider="true"-->
+<!--            />-->
 
-        <EditTextPreference
-            app:key="@string/records_notion_database_id"
-            app:title="@string/records_notion_database"
-            app:useSimpleSummaryProvider="true"
-            app:enabled="false"
-            />
+<!--        <EditTextPreference-->
+<!--            app:key="@string/records_notion_database_id"-->
+<!--            app:title="@string/records_notion_database"-->
+<!--            app:useSimpleSummaryProvider="true"-->
+<!--            app:enabled="false"-->
+<!--            />-->
 
         <EditTextPreference
             app:key="@string/api_url"
@@ -42,7 +42,7 @@
             app:title="@string/product_types_title"
             app:entries="@array/product_types"
             app:entryValues="@array/product_types_values"
-            app:defaultValue="@array/product_types_values"
+            app:defaultValue="@array/empty_array"
             />
 
         <EditTextPreference

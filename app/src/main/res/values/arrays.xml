@@ -15,6 +15,9 @@
         <item>book</item>
     </string-array>
 
+    <string-array name="empty_array">
+    </string-array>
+
     <string-array name="product_types">
         <item>Vinyl 💽</item>
         <item>Book 📕</item>

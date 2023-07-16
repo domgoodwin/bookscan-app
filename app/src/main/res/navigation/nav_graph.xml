@@ -8,11 +8,11 @@
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.example.homecontrol.SettingsFragment"
+        android:name="com.domgoodwin.bookscan.SettingsFragment"
         android:label="SettingsFragment" />
     <fragment
         android:id="@+id/scanFragment"
-        android:name="com.example.homecontrol.ScanFragment"
+        android:name="com.domgoodwin.bookscan.ScanFragment"
         android:label="fragment_scan"
         tools:layout="@layout/fragment_scan" >
         <action

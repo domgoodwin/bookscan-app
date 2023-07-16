@@ -1,9 +1,8 @@
-package com.example.homecontrol
+package com.domgoodwin.bookscan
 
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import com.domgoodwin.bookscan.R
 
 class AuthContext {
     var userID: String? = null

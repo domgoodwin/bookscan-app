@@ -1,13 +1,11 @@
-package com.example.homecontrol
+package com.domgoodwin.bookscan
 
 // Barcode analysis
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
-import com.example.homecontrol.databinding.ActivityMainBinding
+import com.domgoodwin.bookscan.databinding.ActivityMainBinding
 import com.google.mlkit.vision.barcode.common.Barcode
 
 

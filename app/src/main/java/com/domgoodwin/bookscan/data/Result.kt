@@ -1,4 +1,4 @@
-package com.example.homecontrol.data
+package com.domgoodwin.bookscan.data
 
 /**
  * A generic class that holds a value with its loading status.
