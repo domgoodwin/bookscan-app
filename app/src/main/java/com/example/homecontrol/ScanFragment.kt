@@ -386,7 +386,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                                                     TAG,
                                                     "unknown type, is: ${barcode.valueType}"
                                                 )
-                                                setCurrentThing("please scan", ItemState.EMPTY)
+//                                                setCurrentThing("please scan", ItemState.EMPTY)
                                             }
                                         }
                                         // Check the product type is enabled in settings
@@ -436,16 +436,15 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         }
 
         private fun storeBarcode() {
+            var code = fragBinding.barcodeText.text.toString()
             setCurrentThing("Saving", ItemState.SAVING)
             when (barcodeType) {
                 BarcodeType.BOOK -> {
-                    storeBook()
+                    storeBook(code)
                 }
-
                 BarcodeType.PRODUCT -> {
-                    storeVinyl()
+                    storeVinyl(code)
                 }
-
                 else -> {
                     // Shouldn't button be disabled?
                 }
@@ -497,11 +496,10 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             return value
         }
 
-        private fun storeVinyl() {
+        private fun storeVinyl(barcode: String) {
             val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.PRODUCT)
             val baseURL = getSharedPref(getString(R.string.api_url))
             Log.i(TAG, "store barcode")
-            var barcode = fragBinding.barcodeText.text
             var url = "$baseURL/record/store"
             val jsonObject = JSONObject()
             try {
@@ -541,10 +539,9 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             })
         }
 
-        private fun storeBook() {
+        private fun storeBook(isbn: String) {
             val notionDatabaseID = getSharedPrefNotionValue(BarcodeType.BOOK)
-            Log.i(TAG, "store barcode")
-            var isbn = fragBinding.barcodeText.text
+            Log.i(TAG, "store barcode: $isbn")
             val baseURL = getSharedPref(getString(R.string.api_url))
             var url = "$baseURL/book/store"
             val jsonObject = JSONObject()
@@ -713,8 +710,27 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         private class BookBarcodeScanner(private val listener: BarcodeListener) :
             ImageAnalysis.Analyzer {
 
+            private var lastAnalysisTime = LocalDateTime.now()
+
             @SuppressLint("UnsafeOptInUsageError")
             override fun analyze(imageProxy: ImageProxy) {
+
+                var now = LocalDateTime.now()
+
+
+                // Drop frame if an image has been analyzed less than ANALYSIS_DELAY_MS ms ago
+                if (lastAnalysisTime.isAfter(now.minusSeconds(1))) {
+                    Log.i(TAG, "dropping analyse event $lastAnalysisTime $now")
+                    imageProxy.close();
+                    return
+                }
+                Log.i(TAG, "analyse event $lastAnalysisTime $now")
+
+
+                lastAnalysisTime = now;
+
+                // Analyze image
+
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {
                     val image =
