@@ -69,6 +69,13 @@
     <string name="api_url">api_url</string>
     <string name="api_url_default">http://192.168.0.240:8443</string>
 
+    <string name="user_id_title">User ID</string>
+    <string name="user_id">user_id</string>
+    <string name="user_id_default">This shouldnt happen</string>
+
+    <string name="api_token_title">API Token</string>
+    <string name="api_token">api_token</string>
+    <string name="api_token_default">This shouldnt happen</string>
 
     <string name="product_types">product_types</string>
     <string name="product_types_title">Product Types</string>
@@ -76,5 +83,21 @@
 
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="filter_view_main_auth">main_auth</string>
+    <string name="filter_view_main_auth_deep">main_auth_deep</string>
+
+    <string name="title_activity_callback_auth">CallbackAuth</string>
 
 </resources>

@@ -2,16 +2,13 @@ package com.example.homecontrol
 
 // Barcode analysis
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import androidx.navigation.fragment.NavHostFragment
 import com.example.homecontrol.databinding.ActivityMainBinding
 import com.google.mlkit.vision.barcode.common.Barcode
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import okhttp3.*
 
 
 typealias LumaListener = (luma: Double) -> Unit

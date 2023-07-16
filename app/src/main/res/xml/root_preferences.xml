@@ -45,6 +45,20 @@
             app:defaultValue="@array/product_types_values"
             />
 
+        <EditTextPreference
+            app:key="@string/user_id"
+            app:title="@string/user_id_title"
+            app:useSimpleSummaryProvider="true"
+            app:enabled="false"
+            />
+
+        <EditTextPreference
+            app:key="@string/api_token"
+            app:title="@string/api_token_title"
+            app:useSimpleSummaryProvider="true"
+            app:enabled="false"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
