@@ -479,8 +479,15 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             return value
         }
 
+    private fun getAPIUrl(): String {
+        val configUrl: String
+        val configUrlConfig = getSharedPref(getString(R.string.api_url))
+        configUrl = configUrlConfig ?: "https://tower.tailce93f.ts.net:8443/"
+        return configUrl
+    }
+
         private fun storeVinyl(barcode: String) {
-            val baseURL = getSharedPref(getString(R.string.api_url))
+            val baseURL = getAPIUrl()
             Log.i(TAG, "store barcode")
             var url = "$baseURL/record/store"
             val jsonObject = JSONObject()
@@ -522,7 +529,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
         private fun storeBook(isbn: String) {
             Log.i(TAG, "store barcode: $isbn")
-            val baseURL = getSharedPref(getString(R.string.api_url))
+            val baseURL = getAPIUrl()
             var url = "$baseURL/book/store"
             val jsonObject = JSONObject()
             try {
@@ -587,7 +594,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 }
             }
             Log.i(TAG, "lookup $path $barcode")
-            val baseURL = getSharedPref(getString(R.string.api_url))
+            val baseURL = getAPIUrl()
             var url = "$baseURL/$path/lookup?$param=$barcode"
             val request = Request.Builder()
                 .url(url)
