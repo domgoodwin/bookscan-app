@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="5" by="lint Jellyfish | 2023.3.1 Patch 1" client="gradle" dependencies="false" name="AGP (8.4.1)" type="baseline" variant="all" version="8.4.1">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <location
+            file="src/main/java/com/domgoodwin/bookscan/SettingsFragment.kt"
+            line="99"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <location
+            file="src/main/java/com/domgoodwin/bookscan/SettingsFragment.kt"
+            line="115"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details.">
+        <location
+            file="build.gradle"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-hdpi/icon.png"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="src/main/java/com/domgoodwin/bookscan/ScanFragment.kt"
+            line="384"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="src/main/java/com/domgoodwin/bookscan/ScanFragment.kt"
+            line="388"/>
+    </issue>
+
+</issues>

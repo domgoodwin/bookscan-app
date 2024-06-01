@@ -26,7 +26,7 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
                 val authContext = AuthContext.instance
                 authContext.userID = ""
                 authContext.apiKey = ""
-                authContext.SaveToPreferences()
+                authContext.saveToPreferences()
                 Log.e("SETTINGS", "dropping auth info")
                 true
             }
@@ -49,9 +49,12 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
     }
 
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key:String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (sharedPreferences == null) {
+            return
+        }
         if (key == getString(R.string.api_url)) {
-            var prefValue = sharedPreferences.getString(key, "").toString()
+            val prefValue = sharedPreferences.getString(key, "").toString()
             setSharedPreferences(sharedPreferences, getString(R.string.api_url),prefValue)
             return
         }
@@ -70,10 +73,10 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         Log.e("logtag", "preference changed $key")
         val prefValue = sharedPreferences.getString(key, "")
         Log.e("logtag", "preference value $prefValue")
-        var urlParts = prefValue.toString().split("/")
+        val urlParts = prefValue.toString().split("/")
         val idPart = urlParts[urlParts.size-1].split("?")[0]
 
-        var pref: String = ""
+        var pref = ""
         if (key == getString(R.string.books_notion_database_link_id)) {
             pref = getString(R.string.books_notion_database_id)
         } else if (key == getString(R.string.records_notion_database_link_id)) {
@@ -91,12 +94,12 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
         with (sharedPref.edit()) {
             putString(key, value)
-            commit()
+            apply()
         }
         // Commit it to the private default and this specific one so it shows up
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
         editor.putString(key, value)
-        editor.commit()
+        editor.apply()
         reload()
     }
 

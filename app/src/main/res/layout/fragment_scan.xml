@@ -8,6 +8,12 @@
     tools:context=".MainActivity">
 
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="barcodeText" />
+
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
@@ -16,7 +22,7 @@
     </androidx.camera.view.PreviewView>
 
     <Button
-        android:id="@+id/image_capture_button"
+        android:id="@+id/imageCaptureButton"
         android:layout_width="110dp"
         android:layout_height="110dp"
         android:layout_marginEnd="50dp"
@@ -35,7 +41,6 @@
         app:layout_constraintGuide_percent=".50" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/horizontal_centerline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -44,7 +49,7 @@
 
 
     <TextView
-        android:id="@+id/barcode_text"
+        android:id="@+id/barcodeText"
         style="@style/Widget.MaterialComponents.Snackbar.TextView"
         android:layout_width="177dp"
         android:layout_height="76dp"
@@ -56,43 +61,54 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="@id/vertical_centerline" />
 
-    <TextView
-        android:id="@+id/book_title"
-        style="@style/Widget.MaterialComponents.Snackbar.TextView"
-        android:layout_width="281dp"
-        android:layout_height="67dp"
-        android:gravity="center"
-        android:text="@string/book_title"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/book_type"
-        style="@style/Widget.MaterialComponents.Snackbar.TextView"
-        android:layout_width="0dp"
-        android:layout_height="67dp"
-        android:layout_marginStart="350dp"
-        android:layout_marginEnd="25dp"
-        android:gravity="center"
-        android:text="@string/book_type"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/settingsButton"
-        android:layout_width="54dp"
-        android:layout_height="63dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:backgroundTint="@android:color/white"
         android:text="@string/settings"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+        android:textSize="10pt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <RelativeLayout
+        android:id="@+id/titleType"
+        android:layout_marginLeft="100dp"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        app:layout_constraintLeft_toRightOf="@id/settingsButton"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+
+        <TextView
+            android:id="@+id/bookTitle"
+            style="@style/Widget.MaterialComponents.Snackbar.TextView"
+            android:layout_width="250dp"
+            android:layout_height="match_parent"
+            android:layout_toStartOf="@+id/book_type"
+            android:gravity="center"
+            android:text="@string/book_title"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/book_type"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/book_type"
+            style="@style/Widget.MaterialComponents.Snackbar.TextView"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="0dp"
+            android:gravity="center_vertical"
+            android:text="@string/book_type"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            app:layout_constraintLeft_toRightOf="@+id/bookTitle"
+            app:layout_constraintRight_toLeftOf="parent" />
+
+    </RelativeLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

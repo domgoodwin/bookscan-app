@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,7 +14,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -51,10 +49,12 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.time.LocalDateTime
-import java.util.HashSet
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
+
+private const val s = "\uD83D\uDCBD"
 
 /**
  * An example full-screen fragment that shows and hides the system UI (i.e.
@@ -90,9 +90,6 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 Manifest.permission.CAMERA,
                 Manifest.permission.RECORD_AUDIO
             ).apply {
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
             }.toTypedArray()
     }
 
@@ -104,7 +101,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             // Handle Permission granted/rejected
             var permissionGranted = true
             permissions.entries.forEach {
-                if (it.key in REQUIRED_PERMISSIONS && it.value == false)
+                if (it.key in REQUIRED_PERMISSIONS && !it.value)
                     permissionGranted = false
             }
             if (!permissionGranted) {
@@ -142,19 +139,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     private var visible: Boolean = false
     private val hideRunnable = Runnable { hide() }
 
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private val delayHideTouchListener = View.OnTouchListener { _, _ ->
-        if (false) {
-            delayedHide(100)
-        }
-        false
-    }
 
-    private var dummyButton: Button? = null
     private var fullscreenContent: View? = null
     private var fullscreenContentControls: View? = null
 
@@ -167,7 +152,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     private lateinit var cameraExecutor: ExecutorService
 
     var textToSpeech: TextToSpeech? = null
-    var barcodeType: BarcodeType = BarcodeType.UNKNOWN
+    private var barcodeType: BarcodeType = BarcodeType.UNKNOWN
 
     enum class ItemState {
         OWNED, SAVED, SAVING, NOTOWNED, EMPTY, ERROR
@@ -196,12 +181,10 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         _binding = FragmentScanBinding.inflate(inflater, container, false)
-        if (_binding != null) {
-            fragBinding = _binding as FragmentScanBinding
-        }
+        fragBinding = _binding as FragmentScanBinding
 
         // Request camera permissions
         var hasPermission = false
@@ -222,13 +205,13 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
         val authContext = AuthContext.instance
         authContext.fragmentActivity = activity
-        if (!authContext.Authenticated()) {
+        if (!authContext.authenticated()) {
             Log.i(TAG, "not authenticating, loading from pref")
             // If not authenticated try to get the auth info from preferences
-            activity?.let { authContext.LoadFromPreferences(it) }
+            activity?.let { authContext.loadFromPreference(it) }
         }
         // If still not auth we need to do the notion auth
-        if (!authContext.Authenticated()) {
+        if (!authContext.authenticated()) {
             Log.i(TAG, "not authenticating still, doing auth flow")
             parentFragmentManager.commit {
                 replace(R.id.nav_host_fragment, AuthFragment.newInstance(reAuth = false))
@@ -239,16 +222,16 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
 
         // Set up the listeners for saving the barcode
-        _binding?.imageCaptureButton?.setOnClickListener { storeBarcode() }
+        fragBinding.imageCaptureButton?.setOnClickListener { storeBarcode() }
 
-        _binding?.barcodeText?.setTextColor(Color.BLACK);
-        _binding?.barcodeText?.setBackgroundColor(Color.WHITE)
+        fragBinding.barcodeText?.setTextColor(Color.BLACK)
+        fragBinding.barcodeText?.setBackgroundColor(Color.WHITE)
 
-        _binding?.bookTitle?.setTextColor(Color.BLACK);
-        _binding?.bookTitle?.setBackgroundColor(Color.WHITE)
+        fragBinding.bookTitle?.setTextColor(Color.BLACK)
+        fragBinding.bookTitle?.setBackgroundColor(Color.WHITE)
 
-        _binding?.imageCaptureButton?.isEnabled = false
-        _binding?.imageCaptureButton?.isClickable = false
+        fragBinding.imageCaptureButton?.isEnabled = false
+        fragBinding.imageCaptureButton?.isClickable = false
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -296,11 +279,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         show()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
-        private fun toggle() {
+    private fun toggle() {
             if (visible) {
                 hide()
             } else {
@@ -350,93 +329,95 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             val cameraProviderFuture =
                 activity?.let { ProcessCameraProvider.getInstance(it.baseContext) }
 
-            if (cameraProviderFuture != null) {
-                cameraProviderFuture.addListener({
-                    // Used to bind the lifecycle of cameras to the lifecycle owner
-                    val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            cameraProviderFuture?.addListener({
+                // Used to bind the lifecycle of cameras to the lifecycle owner
+                val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-                    Log.e(TAG, "building preview")
-                    // Preview
-                    val preview = Preview.Builder()
-                        .build()
-                        .also {
-                            it.setSurfaceProvider(fragBinding.viewFinder.surfaceProvider)
-                        }
-
-                    imageCapture = ImageCapture.Builder().build()
-
-                    val imageAnalyzer = ImageAnalysis.Builder()
-                        .build()
-                        .also {
-                            it.setAnalyzer(cameraExecutor, BookBarcodeScanner { barcodes ->
-                                for (barcode in barcodes) {
-                                    // See API reference for complete list of supported type
-                                    if (fragBinding.barcodeText.text != barcode.rawValue || lastLookedUpBarcode != barcode.rawValue) {
-                                        when (barcode.valueType) {
-                                            Barcode.TYPE_ISBN -> {
-                                                barcodeType = BarcodeType.BOOK
-                                            }
-
-                                            Barcode.TYPE_PRODUCT -> {
-                                                barcodeType = BarcodeType.PRODUCT
-                                            }
-
-                                            else -> {
-                                                Log.i(
-                                                    TAG,
-                                                    "unknown type, is: ${barcode.valueType}"
-                                                )
-//                                                setCurrentThing("please scan", ItemState.EMPTY)
-                                            }
-                                        }
-                                        // Check the product type is enabled in settings
-                                        if (checkBarcodeTypeEnabled(barcodeType)) {
-                                            when (barcodeType) {
-                                                BarcodeType.BOOK -> {
-                                                    fragBinding.bookType.text = "\uD83D\uDCDA"
-                                                }
-
-                                                BarcodeType.PRODUCT -> {
-                                                    fragBinding.bookType.text = "\uD83D\uDCBD"
-                                                }
-
-                                                else -> {}
-                                            }
-                                            lookupBarcode(barcode.rawValue, barcodeType)
-                                            fragBinding.barcodeText.text = barcode.rawValue
-                                        } else {
-                                            Log.i(TAG, "product type disabled $barcodeType")
-                                            continue
-                                        }
-
-                                    }
-                                }
-                            })
-                        }
-
-                    // Select back camera as a default
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                    try {
-                        // Unbind use cases before rebinding
-                        cameraProvider.unbindAll()
-
-                        // Bind use cases to camera
-                        cameraProvider.bindToLifecycle(
-                            this, cameraSelector, preview, imageCapture, imageAnalyzer
-                        )
-
-
-                    } catch (exc: Exception) {
-                        Log.e(TAG, "Use case binding failed", exc)
+                Log.e(TAG, "building preview")
+                // Preview
+                val preview = Preview.Builder()
+                    .build()
+                    .also {
+                        it.setSurfaceProvider(fragBinding.viewFinder.surfaceProvider)
                     }
 
-                }, activity?.let { ContextCompat.getMainExecutor(it.baseContext) })
-            }
+                imageCapture = ImageCapture.Builder()
+                    .build()
+
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setImageQueueDepth(1)
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor, BookBarcodeScanner { barcodes ->
+                            for (barcode in barcodes) {
+                                // See API reference for complete list of supported type
+                                if (fragBinding.barcodeText.text != barcode.rawValue || lastLookedUpBarcode != barcode.rawValue) {
+                                    when (barcode.valueType) {
+                                        Barcode.TYPE_ISBN -> {
+                                            barcodeType = BarcodeType.BOOK
+                                        }
+
+                                        Barcode.TYPE_PRODUCT -> {
+                                            barcodeType = BarcodeType.PRODUCT
+                                        }
+
+                                        else -> {
+                                            Log.i(
+                                                TAG,
+                                                "unknown type, is: ${barcode.valueType}"
+                                            )
+        //                                                setCurrentThing("please scan", ItemState.EMPTY)
+                                        }
+                                    }
+                                    // Check the product type is enabled in settings
+                                    if (checkBarcodeTypeEnabled(barcodeType)) {
+                                        when (barcodeType) {
+                                            BarcodeType.BOOK -> {
+                                                fragBinding.bookType.text =
+                                                    getString(R.string.book_icon)
+                                            }
+
+                                            BarcodeType.PRODUCT -> {
+                                                fragBinding.bookType.text = getString(R.string.record_icon)
+                                            }
+
+                                            else -> {}
+                                        }
+                                        lookupBarcode(barcode.rawValue, barcodeType)
+                                        fragBinding.barcodeText.text = barcode.rawValue
+                                    } else {
+                                        Log.i(TAG, "product type disabled $barcodeType")
+                                        continue
+                                    }
+
+                                }
+                            }
+                        })
+                    }
+
+                // Select back camera as a default
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                try {
+                    // Unbind use cases before rebinding
+                    cameraProvider.unbindAll()
+
+                    // Bind use cases to camera
+                    cameraProvider.bindToLifecycle(
+                        this, cameraSelector, preview, imageCapture, imageAnalyzer
+                    )
+
+
+                } catch (exc: Exception) {
+                    Log.e(TAG, "Use case binding failed", exc)
+                }
+
+            }, activity?.let { ContextCompat.getMainExecutor(it.baseContext) })
         }
 
         private fun storeBarcode() {
-            var code = fragBinding.barcodeText.text.toString()
+            val code = fragBinding.barcodeText.text.toString()
             setCurrentThing("Saving", ItemState.SAVING)
             when (barcodeType) {
                 BarcodeType.BOOK -> {
@@ -489,7 +470,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         private fun storeVinyl(barcode: String) {
             val baseURL = getAPIUrl()
             Log.i(TAG, "store barcode")
-            var url = "$baseURL/record/store"
+            val url = "$baseURL/record/store"
             val jsonObject = JSONObject()
             try {
                 jsonObject.put("barcode", barcode)
@@ -518,9 +499,9 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                         ?.let { Json.parseToJsonElement(it.toString()) }
                     Log.i(TAG, "Response body: $jsonBody")
                     if (jsonBody != null) {
-                        var title = bookJson?.jsonObject?.get("title").toString()
+                        val title = bookJson?.jsonObject?.get("title").toString()
                         Log.i(TAG, "title: $title")
-                        textToSpeech?.speak(title, TextToSpeech.QUEUE_FLUSH, null, "");
+                        textToSpeech?.speak(title, TextToSpeech.QUEUE_FLUSH, null, "")
                         setCurrentThing(title, ItemState.SAVED)
                     }
                 }
@@ -530,7 +511,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         private fun storeBook(isbn: String) {
             Log.i(TAG, "store barcode: $isbn")
             val baseURL = getAPIUrl()
-            var url = "$baseURL/book/store"
+            val url = "$baseURL/book/store"
             val jsonObject = JSONObject()
             try {
                 jsonObject.put("isbn", isbn)
@@ -559,9 +540,9 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                         ?.let { Json.parseToJsonElement(it.toString()) }
                     Log.i(TAG, "Response body: $jsonBody")
                     if (jsonBody != null) {
-                        var title = bookJson?.jsonObject?.get("title").toString()
+                        val title = bookJson?.jsonObject?.get("title").toString()
                         Log.i(TAG, "title: $title")
-                        textToSpeech?.speak(title, TextToSpeech.QUEUE_FLUSH, null, "");
+                        textToSpeech?.speak(title, TextToSpeech.QUEUE_FLUSH, null, "")
                         setCurrentThing(title, ItemState.SAVED)
                     }
                 }
@@ -595,7 +576,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             }
             Log.i(TAG, "lookup $path $barcode")
             val baseURL = getAPIUrl()
-            var url = "$baseURL/$path/lookup?$param=$barcode"
+            val url = "$baseURL/$path/lookup?$param=$barcode"
             val request = Request.Builder()
                 .url(url)
                 .get()
@@ -623,7 +604,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                         if (bookJson != null) {
                             title = bookJson.jsonObject["title"].toString()
                         }
-                        var alreadyStored =
+                        val alreadyStored =
                             jsonBody.jsonObject["already_stored"]?.jsonPrimitive?.boolean
                         Log.i(TAG, "stored: $alreadyStored")
                         if (alreadyStored == true) {
@@ -695,19 +676,15 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             @SuppressLint("UnsafeOptInUsageError")
             override fun analyze(imageProxy: ImageProxy) {
 
-                var now = LocalDateTime.now()
-
-
+                val now = LocalDateTime.now()
                 // Drop frame if an image has been analyzed less than ANALYSIS_DELAY_MS ms ago
                 if (lastAnalysisTime.isAfter(now.minusSeconds(1))) {
-                    Log.d(TAG, "dropping analyse event $lastAnalysisTime $now")
-                    imageProxy.close();
+                    imageProxy.close()
                     return
                 }
+
                 Log.d(TAG, "analyse event $lastAnalysisTime $now")
-
-
-                lastAnalysisTime = now;
+                lastAnalysisTime = now
 
                 // Analyze image
 
@@ -729,7 +706,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                         }
                         .addOnFailureListener { exception ->
                             Log.d(TAG, "fail: $exception")
-                            var mlEx = exception as? MlKitException
+                            val mlEx = exception as? MlKitException
                             if (mlEx != null) {
                                 Log.d(TAG, "fail: ${mlEx.errorCode}")
                             }

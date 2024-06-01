@@ -17,21 +17,21 @@ class CallbackAuth : ComponentActivity() {
 
         Log.i("CALLBACK", "start data: $data; action: $action")
 
-        var urlParts = data.toString().split("?")
+        val urlParts = data.toString().split("?")
         var params = ""
         if (urlParts.count() > 1) {
             params = urlParts[1]
         }
-        var paramParts = params.split("&")
+        val paramParts = params.split("&")
 
         val authContext = AuthContext.instance
         for (part in paramParts) {
-            var parts = part.split("=")
+            val parts = part.split("=")
             if (parts.count() != 2) {
                 continue
             }
-            var key = parts[0]
-            var value = parts[1]
+            val key = parts[0]
+            val value = parts[1]
             if (key == "api_token") {
                 authContext.apiKey = value
             }
@@ -40,7 +40,7 @@ class CallbackAuth : ComponentActivity() {
             }
         }
 
-        authContext.SaveToPreferences()
+        authContext.saveToPreferences()
 
 
         Log.i("CALLBACK", "data: $data; action: $action")

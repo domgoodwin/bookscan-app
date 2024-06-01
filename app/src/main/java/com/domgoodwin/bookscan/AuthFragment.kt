@@ -24,10 +24,10 @@ class AuthFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
-        var binding = FragmentAuthBinding.inflate(inflater, container, false)
-        var webView = binding.main
+        val binding = FragmentAuthBinding.inflate(inflater, container, false)
+        val webView = binding.main
 
         webView.loadUrl("https://tower.tailce93f.ts.net:8443/auth")
 
