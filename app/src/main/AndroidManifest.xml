@@ -55,7 +55,7 @@ xmlns:tools="http://schemas.android.com/tools">
 
             <data
                 android:scheme="http"
-                android:host="bookscan.dgood.win"
+                android:host="bookscan"
                 android:pathPrefix="/auth"
                 />
         </intent-filter>
@@ -69,6 +69,18 @@ xmlns:tools="http://schemas.android.com/tools">
             <data
                 android:scheme="bookscan"
                 android:host="auth"
+                />
+        </intent-filter>
+
+        <intent-filter android:label="@string/filter_view_main_reauth_deep">
+            <action android:name="android.intent.action.VIEW" />
+
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <data
+                android:scheme="bookscan"
+                android:host="reauth"
                 />
         </intent-filter>
     </activity>

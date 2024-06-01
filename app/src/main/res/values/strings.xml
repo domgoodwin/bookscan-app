@@ -77,6 +77,10 @@
     <string name="api_token">api_token</string>
     <string name="api_token_default">This shouldnt happen</string>
 
+    <string name="reauth_title">🔑 Setup Auth 🔑</string>
+    <string name="reauth">api_token</string>
+    <string name="reauth_default">Logged In</string>
+
     <string name="product_types">product_types</string>
     <string name="product_types_title">Product Types</string>
     <string name="product_types_default">All</string>
@@ -98,6 +102,8 @@
     <string name="filter_view_main_auth">main_auth</string>
     <string name="filter_view_main_auth_deep">main_auth_deep</string>
 
-    <string name="title_activity_callback_auth">CallbackAuth</string>
+    <string name="filter_view_main_reauth">main_reauth</string>
+    <string name="filter_view_main_reauth_deep">main_reauth_deep</string>
 
+    <string name="title_activity_callback_auth">CallbackAuth</string>
 </resources>

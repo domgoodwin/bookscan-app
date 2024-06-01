@@ -59,6 +59,13 @@
             app:enabled="false"
             />
 
+        <Preference
+            app:key="@string/reauth"
+            app:title="@string/reauth_title"
+            app:useSimpleSummaryProvider="true"
+            app:defaultValue="@string/reauth_default"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

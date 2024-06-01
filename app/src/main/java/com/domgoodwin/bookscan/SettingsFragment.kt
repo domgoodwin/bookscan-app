@@ -5,9 +5,11 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.commit
+import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceFragmentCompat
 import com.domgoodwin.bookscan.databinding.FragmentScanBinding
-import java.util.HashSet
+
 
 class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -19,6 +21,15 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
 
         preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
 
+        preferenceManager.findPreference<Preference>(getString(R.string.reauth))?.onPreferenceClickListener =
+            OnPreferenceClickListener {
+                val authContext = AuthContext.instance
+                authContext.userID = ""
+                authContext.apiKey = ""
+                authContext.SaveToPreferences()
+                Log.e("SETTINGS", "dropping auth info")
+                true
+            }
     }
 
     override fun onResume() {

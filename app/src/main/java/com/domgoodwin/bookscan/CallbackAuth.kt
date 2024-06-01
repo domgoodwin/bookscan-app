@@ -15,6 +15,8 @@ class CallbackAuth : ComponentActivity() {
         val action: String? = intent?.action
         val data: Uri? = intent?.data
 
+        Log.i("CALLBACK", "start data: $data; action: $action")
+
         var urlParts = data.toString().split("?")
         var params = ""
         if (urlParts.count() > 1) {
